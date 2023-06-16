@@ -13,9 +13,37 @@ with open("api_key.txt", "r", encoding="utf8") as file:
 
 
 @retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(3))
-def request_response_from_ai_model(
-    messages: list[dict], functions=None, function_call="auto", model=GPT_3_5
+def request_response_from_ai_model_with_functions(
+    messages: list[dict], functions, function_call="auto", model=GPT_3_5
 ) -> dict:
+    """Tries to get a response from an AI model.
+
+    Args:
+        messages (list[dict]): the list of messages that will be sent to the AI model.
+
+    Returns:
+        dict: the response returned from the AI model.
+    """
+    if not isinstance(messages, list):
+        error_message = f"The function {request_response_from_ai_model_with_functions.__name__} expected 'messages' to be a list, but it was: {messages}"
+        raise InvalidParameterError(error_message)
+    if functions is None:
+        error_message = f"The function {request_response_from_ai_model_with_functions.__name__} expected 'functions' not to be None."
+
+    response = openai.ChatCompletion.create(
+        model=model,
+        temperature=1,
+        messages=messages,
+        max_tokens=2048,
+        functions=functions,
+        function_call=function_call,
+    )
+
+    return response
+
+
+@retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(3))
+def request_response_from_ai_model(messages: list[dict], model=GPT_3_5) -> dict:
     """Tries to get a response from an AI model.
 
     Args:
@@ -33,8 +61,6 @@ def request_response_from_ai_model(
         temperature=1,
         messages=messages,
         max_tokens=2048,
-        functions=functions,
-        function_call=function_call,
     )
 
     return response

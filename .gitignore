@@ -39,6 +39,9 @@ pip-delete-this-directory.txt
 # API key
 api_key.txt
 
+# Personal
+examples/dialogue/*.txt
+
 # Unit test / coverage reports
 htmlcov/
 .tox/
