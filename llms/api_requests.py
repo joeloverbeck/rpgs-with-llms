@@ -3,7 +3,9 @@
 import openai
 from tenacity import retry, stop_after_attempt, wait_random_exponential
 from defines.defines import (
+    DEFAULT_TEMPERATURE,
     GPT_3_5,
+    MAX_TOKENS,
 )
 from errors import InvalidParameterError
 
@@ -16,10 +18,16 @@ with open("api_key.txt", "r", encoding="utf8") as file:
 def request_response_from_ai_model_with_functions(
     messages: list[dict], functions, function_call="auto", model=GPT_3_5
 ) -> dict:
-    """Tries to get a response from an AI model.
+    """Tries to get a response from an AI model. In this variant, the use of functions is expected
+    by the AI model.
 
     Args:
         messages (list[dict]): the list of messages that will be sent to the AI model.
+        functions (list[dict]): the list of functions that the AI model will have available.
+        function_call (str): whether the AI model should choose to use the functions or not.
+            It is required by the OpenAI API. The default value of 'auto' means that it will use any
+            of the available functions when it considers it necessary.
+        model (str): what AI model will be used.
 
     Returns:
         dict: the response returned from the AI model.
@@ -29,12 +37,13 @@ def request_response_from_ai_model_with_functions(
         raise InvalidParameterError(error_message)
     if functions is None:
         error_message = f"The function {request_response_from_ai_model_with_functions.__name__} expected 'functions' not to be None."
+        raise InvalidParameterError(error_message)
 
     response = openai.ChatCompletion.create(
         model=model,
-        temperature=1,
+        temperature=DEFAULT_TEMPERATURE,
         messages=messages,
-        max_tokens=2048,
+        max_tokens=MAX_TOKENS,
         functions=functions,
         function_call=function_call,
     )
@@ -48,6 +57,7 @@ def request_response_from_ai_model(messages: list[dict], model=GPT_3_5) -> dict:
 
     Args:
         messages (list[dict]): the list of messages that will be sent to the AI model.
+        model (str): what AI model will be used.
 
     Returns:
         dict: the response returned from the AI model.
@@ -58,9 +68,9 @@ def request_response_from_ai_model(messages: list[dict], model=GPT_3_5) -> dict:
 
     response = openai.ChatCompletion.create(
         model=model,
-        temperature=1,
+        temperature=DEFAULT_TEMPERATURE,
         messages=messages,
-        max_tokens=2048,
+        max_tokens=MAX_TOKENS,
     )
 
     return response
