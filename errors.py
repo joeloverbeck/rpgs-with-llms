@@ -2,5 +2,13 @@ class InvalidParameterError(Exception):
     pass
 
 
-class FileDoesntExistError(Exception):
+class FailedToReceiveFunctionCallFromAiModelError(Exception):
+    pass
+
+
+class UnableToSaveVectorDatabaseError(Exception):
+    pass
+
+
+class DisparityBetweenDatabasesError(Exception):
     pass
