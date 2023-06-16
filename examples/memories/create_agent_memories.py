@@ -10,9 +10,9 @@ def main():
 
     current_timestamp = datetime(2023, 6, 6)
 
-    memories_database_creator = MemoriesDatabaseCreator(agent_name, current_timestamp)
+    memories_database_creator = MemoriesDatabaseCreator()
 
-    memories_database_creator.create_database()
+    memories_database_creator.create_database(agent_name, current_timestamp)
 
 
 if __name__ == "__main__":

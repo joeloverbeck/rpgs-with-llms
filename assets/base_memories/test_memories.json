@@ -11,7 +11,7 @@
         "creation_timestamp": "2023-06-06T00:00:00",
         "most_recent_access_timestamp": "2023-06-06T00:00:00",
         "recency": 1.0,
-        "importance": 0.8888888888888888
+        "importance": 1.0
     },
     "2": {
         "description": "Test stepped on a turd.",
