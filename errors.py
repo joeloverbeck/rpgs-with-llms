@@ -24,3 +24,11 @@ class ValueOutOfRangeError(Exception):
 
 class FailedToExtractArgumentsFromFunctionCallError(Exception):
     pass
+
+
+class AgentStatusMissingError(Exception):
+    pass
+
+
+class CouldntDetermineNextSpeakerError(Exception):
+    pass
