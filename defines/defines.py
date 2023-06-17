@@ -10,6 +10,7 @@ MAX_TOKENS = 2048
 
 SYSTEM_ROLE = "system"
 ASSISTANT_ROLE = "assistant"
+USER_ROLE = "user"
 
 DIALOGUE_GPT_SYSTEM_CONTENT = "I am DialogueGPT. I have the responsibility of carrying on a dialogue between two or more characters until the context of "
 DIALOGUE_GPT_SYSTEM_CONTENT += "the dialogue suggests that the dialogue should end."
@@ -26,12 +27,15 @@ LINES_OF_DIALOGUE_PARAMETER_NAME = "lines_of_dialogue"
 LINES_OF_DIALOGUE_PARAMETER_DESCRIPTION = "A line of dialogue, starting with the name of the character, followed by a colon and the spoken line of dialogue."
 LINES_OF_DIALOGUE_PARAMETER_DESCRIPTION += " Can also include narration in parenthesis, if necessary. Never repeat the last line of dialogue."
 
+
 HOW_MANY_LINES_OF_DIALOGUE_TO_SHOW_TO_USER = 4
 
 VECTOR_DIMENSIONS = 384
 NUMBER_OF_TREES = 10
 METRIC_ANGULAR = "angular"
 DECAY_RATE = 0.99
+
+NUMBER_OF_BASE_RESULTS_FOR_EVERY_QUERY = 50
 
 SCORE_ALPHA = 1.0
 SCORE_BETA = 1.0

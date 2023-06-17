@@ -2,16 +2,16 @@
 import argparse
 from datetime import datetime
 
-from memories.memories_database_creator import MemoriesDatabaseCreator
+from character_summaries.character_summary_creator import CharacterSummaryCreator
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Creates the memories database for an agent."
+        description="Creates the character summary of an agent."
     )
     parser.add_argument(
         "agent_name",
-        help="The name of the agent whose memories database will be created.",
+        help="The name of the agent whose character summary will be created.",
     )
 
     args = parser.parse_args()
@@ -22,9 +22,7 @@ def main():
 
     current_timestamp = datetime(2023, 6, 6)
 
-    memories_database_creator = MemoriesDatabaseCreator()
-
-    memories_database_creator.create_database(args.agent_name, current_timestamp)
+    CharacterSummaryCreator(args.agent_name, current_timestamp).create()
 
 
 if __name__ == "__main__":

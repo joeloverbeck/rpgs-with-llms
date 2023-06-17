@@ -11,3 +11,7 @@ def get_base_memories_json_full_path(agent_name: str):
 
 def get_seed_memories_full_path(agent_name: str):
     return f"assets/seed_memories/{replace_spaces_with_underscores(agent_name.lower())}_seed_memories.txt"
+
+
+def get_character_summary_full_path(agent_name: str):
+    return f"assets/character_summaries/{replace_spaces_with_underscores(agent_name.lower())}_character_summary.txt"

@@ -20,3 +20,7 @@ class CurrentTimestampIsLaterThanAccessTimestampError(Exception):
 
 class ValueOutOfRangeError(Exception):
     pass
+
+
+class FailedToExtractArgumentsFromFunctionCallError(Exception):
+    pass

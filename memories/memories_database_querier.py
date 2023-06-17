@@ -1,6 +1,6 @@
 from annoy import AnnoyIndex
 
-from defines.defines import DECAY_RATE, MODEL
+from defines.defines import DECAY_RATE, MODEL, NUMBER_OF_BASE_RESULTS_FOR_EVERY_QUERY
 from math_utils import calculate_recency, calculate_score
 from memories.jsonification import format_python_memory_data_for_json
 from memories.saving import save_memories_to_json_file_ensuring_parity
@@ -26,11 +26,9 @@ class MemoriesDatabaseQuerier:
         """
         # Get nearest neighbors from the Annoy index
         nearest_neighbors = self._index.get_nns_by_vector(
-            MODEL.encode(query), number_of_results, include_distances=True
-        )
-
-        self._update_most_recent_access_timestamps(
-            nearest_neighbors,
+            MODEL.encode(query),
+            NUMBER_OF_BASE_RESULTS_FOR_EVERY_QUERY,
+            include_distances=True,
         )
 
         # Calculate the custom scores
@@ -39,13 +37,16 @@ class MemoriesDatabaseQuerier:
         # Sort the results by the custom scores in descending order
         scores = sorted(scores, key=lambda x: x[1], reverse=True)
 
+        self._update_most_recent_access_timestamps(scores, number_of_results)
+
         return [
             f"{self._memories_raw_data[str(entry[0])]['description']}"
-            for entry in scores
+            for entry in scores[:number_of_results]
         ]
 
     def _calculate_custom_scores_of_memories(self, nearest_neighbors):
         scores = []
+
         for idx, distance in zip(nearest_neighbors[0], nearest_neighbors[1]):
             relevance = 1 - distance
             recency = self._memories_raw_data[str(idx)]["recency"]
@@ -55,14 +56,11 @@ class MemoriesDatabaseQuerier:
 
         return scores
 
-    def _update_most_recent_access_timestamps(
-        self,
-        nearest_neighbors,
-    ):
+    def _update_most_recent_access_timestamps(self, scores, number_of_results):
         """Updates the most recent access timestamps of query results.
 
         Args:
-            nearest_neighbors (list): the query results from the vector database. They come in tuples of (idx, distance)
+            scores (list): a scored and ordered list of relevant results of the query.
 
         Returns:
             dict: the memories in raw data format, with updated 'most_recent_access_timestamp' and 'recency' values
@@ -73,7 +71,7 @@ class MemoriesDatabaseQuerier:
         )
 
         # Update the 'most_recent_access_timestamp' as well as the 'recency' values of each entry
-        for idx, _ in zip(nearest_neighbors[0], nearest_neighbors[1]):
+        for idx, _ in scores[:number_of_results]:
             # locate in memories_raw_data which are those records
 
             self._memories_raw_data[str(idx)]["recency"] = calculate_recency(
