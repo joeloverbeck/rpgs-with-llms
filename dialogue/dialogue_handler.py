@@ -2,30 +2,46 @@
 """
 
 import json
-from defines.defines import GPT_4
+from defines.defines import (
+    ASSISTANT_ROLE,
+    DIALOGUE_GPT_SYSTEM_CONTENT,
+    GPT_4,
+    HOW_MANY_LINES_OF_DIALOGUE_TO_SHOW_TO_USER,
+    LINES_OF_DIALOGUE_PARAMETER_DESCRIPTION,
+    LINES_OF_DIALOGUE_PARAMETER_NAME,
+    STOP_DIALOGUE_FUNCTION_DESCRIPTION,
+    STOP_DIALOGUE_FUNCTION_NAME,
+    SYSTEM_ROLE,
+    WRITE_LINES_OF_DIALOGUE_FUNCTION_DESCRIPTION,
+    WRITE_LINES_OF_DIALOGUE_FUNCTION_NAME,
+)
 from errors import InvalidParameterError
 from input.confirmation import request_confirmation
-from llms.api_requests import request_response_from_ai_model_with_functions
+from llms.messages import get_message_from_gpt_response
 from llms.user_requests import request_response_from_user
 
 
 class DialogueHandler:
     """Handles the dialogue between two or more characters, relying on an AI model."""
 
-    def __init__(self, initial_messages):
+    def __init__(
+        self, initial_messages, request_response_from_ai_model_with_functions_function
+    ):
         if not isinstance(initial_messages, list):
             raise InvalidParameterError(
                 f"The class {DialogueHandler.__name__} expected 'initial_messages' to be a list, but it was: {initial_messages}"
             )
 
+        self._request_reponse_from_ai_model_with_functions_function = (
+            request_response_from_ai_model_with_functions_function
+        )
+
         self._messages = []
 
-        system_content = "I am DialogueGPT. I have the responsibility of carrying on a dialogue between two or more characters until the context of "
-        system_content += "the dialogue suggests that the dialogue should end."
         self._messages.append(
             {
-                "role": "system",
-                "content": system_content,
+                "role": SYSTEM_ROLE,
+                "content": DIALOGUE_GPT_SYSTEM_CONTENT,
             }
         )
 
@@ -34,8 +50,8 @@ class DialogueHandler:
         self._functions = []
         self._functions.append(
             {
-                "name": "stop_dialogue",
-                "description": "Stops the dialogue if the latest utterances make it likely that the dialogue should end now.",
+                "name": STOP_DIALOGUE_FUNCTION_NAME,
+                "description": STOP_DIALOGUE_FUNCTION_DESCRIPTION,
                 "parameters": {
                     "type": "object",
                     "properties": {},
@@ -45,62 +61,53 @@ class DialogueHandler:
         )
         self._functions.append(
             {
-                "name": "get_lines_of_dialogue",
-                "description": "Gets the lines of dialogue for the characters that realistically would speak at this point of the dialogue.",
+                "name": WRITE_LINES_OF_DIALOGUE_FUNCTION_NAME,
+                "description": WRITE_LINES_OF_DIALOGUE_FUNCTION_DESCRIPTION,
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "lines_of_dialogue": {
+                        LINES_OF_DIALOGUE_PARAMETER_NAME: {
                             "type": "array",
                             "items": {
                                 "type": "string",
-                                "description": """A line of dialogue, starting with the name of the character, followed by a colon and the spoken line of dialogue.
-                                Can also include narration in parenthesis, if necessary.""",
+                                "description": LINES_OF_DIALOGUE_PARAMETER_DESCRIPTION,
                             },
                         }
                     },
-                    "required": ["lines_of_dialogue"],
+                    "required": [LINES_OF_DIALOGUE_PARAMETER_NAME],
                 },
             }
         )
 
-    def _get_message_function(self, user_spoke_last):
+    def _crash_if_content_in_last_x_messages_was_invalid(self, last_x_messages):
+        for msg in last_x_messages:
+            if msg["content"] is None:
+                raise ValueError(
+                    f"Invalid message content in last {HOW_MANY_LINES_OF_DIALOGUE_TO_SHOW_TO_USER} messages: {last_x_messages}"
+                )
+
+    def _determine_request_response_function(self, user_spoke_last, last_x_messages):
+        # Only request confirmation if the user didn't speak last.
         if not user_spoke_last and request_confirmation(
             "Last 3 messages: \n"
-            + "\n".join([msg["content"] for msg in self._messages[-3:]])
+            + "\n".join([msg["content"] for msg in last_x_messages])
             + "\nDo you want to interject in the conversation?"
         ):
-            return request_response_from_user
+            request_function = request_response_from_user
+        else:
+            request_function = (
+                self._request_reponse_from_ai_model_with_functions_function
+            )
 
-        return request_response_from_ai_model_with_functions
+        return request_function
 
-    def _handle_stop_dialogue(self, should_continue_dialogue, message):
-        if (
-            message.get("function_call")
-            and message["function_call"]["name"] == "stop_dialogue"
+    def _store_lines_of_dialogue_produced_by_gpt(self, message: dict):
+        function_arguments = json.loads(message["function_call"]["arguments"])
+
+        for line_of_dialogue in function_arguments.get(
+            LINES_OF_DIALOGUE_PARAMETER_NAME
         ):
-            return False
-        return should_continue_dialogue
-
-    def _handle_lines_of_dialogue(self, user_spoke_last, message):
-        if (
-            message.get("function_call")
-            and message["function_call"]["name"] == "get_lines_of_dialogue"
-        ):
-            function_arguments = json.loads(message["function_call"]["arguments"])
-
-            for line_of_dialogue in function_arguments.get("lines_of_dialogue"):
-                self._messages.append(
-                    {"role": "assistant", "content": line_of_dialogue}
-                )
-            return False
-        return user_spoke_last
-
-    def _handle_assistant_message(self, user_spoke_last, message):
-        if message.get("role") == "assistant" and message.get("content") is not None:
-            self._messages.append(message)
-            return False
-        return user_spoke_last
+            self._messages.append({"role": ASSISTANT_ROLE, "content": line_of_dialogue})
 
     def perform_dialogue(self) -> list:
         """Performs a dialogue given the initial context passed during the initialization of this class.
@@ -117,50 +124,52 @@ class DialogueHandler:
         should_continue_dialogue = True
 
         while should_continue_dialogue:
-            # Only request confirmation if the user didn't speak last.
-            if not user_spoke_last and request_confirmation(
-                "Last 3 messages: \n"
-                + "\n".join([msg["content"] for msg in self._messages[-3:]])
-                + "\nDo you want to interject in the conversation?"
-            ):
-                request_function = request_response_from_user
-            else:
-                request_function = request_response_from_ai_model_with_functions
+            last_x_messages = self._messages[
+                -HOW_MANY_LINES_OF_DIALOGUE_TO_SHOW_TO_USER:
+            ]
 
+            self._crash_if_content_in_last_x_messages_was_invalid(last_x_messages)
+
+            request_function = self._determine_request_response_function(
+                user_spoke_last, last_x_messages
+            )
+
+            # In the following call, the 'auto' parameter means that the AI model will choose among the functions available, if necessary.
+            # That parameter is required for the OpenAI GPT API.
             response = request_function(self._messages, self._functions, "auto", GPT_4)
 
             # Determine if the model has called the function to end the dialogue.
-            message = response["choices"][0]["message"]
+            message = get_message_from_gpt_response(response)
 
             if (
                 message.get("function_call")
-                and message["function_call"]["name"] == "stop_dialogue"
+                and message["function_call"]["name"] == STOP_DIALOGUE_FUNCTION_NAME
             ):
                 should_continue_dialogue = False
 
-            elif (
+            if (
                 message.get("function_call")
-                and message["function_call"]["name"] == "get_lines_of_dialogue"
+                and message["function_call"]["name"]
+                == WRITE_LINES_OF_DIALOGUE_FUNCTION_NAME
             ):
                 # Have received lines of dialogue from GPT-4.
-                function_arguments = json.loads(message["function_call"]["arguments"])
-
-                for line_of_dialogue in function_arguments.get("lines_of_dialogue"):
-                    self._messages.append(
-                        {"role": "assistant", "content": line_of_dialogue}
-                    )
+                self._store_lines_of_dialogue_produced_by_gpt(message)
 
                 user_spoke_last = False
-            elif (
-                message.get("role") == "assistant"
+
+            if (
+                message.get("role") == ASSISTANT_ROLE
                 and message.get("content") is not None
             ):
                 # the AI ignored our function to just return a single line of dialogue.
                 self._messages.append(message)
+
                 user_spoke_last = False
-            else:
+
+            if message.get("content") != self._messages[-1:][0].get("content"):
                 # the message came from the user
                 self._messages.append(message)
+
                 user_spoke_last = True
 
         return self._messages

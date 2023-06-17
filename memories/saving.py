@@ -9,6 +9,18 @@ from memories.validation import ensure_parity_between_databases
 from memories.vectorization import create_vectorized_memory
 
 
+def save_memories_to_json_file_ensuring_parity(
+    memories_json_full_path: str, memories: dict, new_index: AnnoyIndex
+):
+    # Save the memories dictionary to a json file.
+    with open(memories_json_full_path, "w", encoding="utf8") as json_file:
+        json.dump(memories, json_file)
+
+    # ensure that there is parity between the length of both the json and the index database.
+    with open(memories_json_full_path, "r", encoding="utf8") as json_file:
+        ensure_parity_between_databases(json.load(json_file), new_index)
+
+
 def save_memories(
     current_timestamp: datetime,
     new_memories: list[str],
@@ -31,9 +43,6 @@ def save_memories(
         memories_json_full_path, memories
     )
 
-    with open(memories_json_full_path, "w", encoding="utf8") as json_file:
-        json.dump(memories, json_file)
-
-    # ensure that there is parity between the length of both the json
-    with open(memories_json_full_path, "r", encoding="utf8") as json_file:
-        ensure_parity_between_databases(json.load(json_file), new_index)
+    save_memories_to_json_file_ensuring_parity(
+        memories_json_full_path, memories, new_index
+    )

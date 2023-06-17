@@ -107,3 +107,47 @@ def create_memory_dictionary(memory_description: str, current_timestamp: datetim
         "recency": recency,
         "importance": normalized_importance,
     }
+
+
+def format_json_memory_data_for_python(memories_raw_data):
+    for memory_key in memories_raw_data:
+        memories_raw_data[memory_key] = {
+            "description": memories_raw_data[memory_key]["description"],
+            "creation_timestamp": datetime.fromisoformat(
+                memories_raw_data[memory_key]["creation_timestamp"]
+            ),
+            "most_recent_access_timestamp": datetime.fromisoformat(
+                memories_raw_data[memory_key]["most_recent_access_timestamp"]
+            ),
+            "recency": memories_raw_data[memory_key]["recency"],
+            "importance": memories_raw_data[memory_key]["importance"],
+        }
+
+    return memories_raw_data
+
+
+def format_python_memory_data_for_json(memories_raw_data):
+    for memory_key in memories_raw_data:
+        creation_timestamp = (
+            memories_raw_data[memory_key]["creation_timestamp"].isoformat()
+            if isinstance(memories_raw_data[memory_key]["creation_timestamp"], datetime)
+            else memories_raw_data[memory_key]["creation_timestamp"]
+        )
+
+        most_recent_access_timestamp = (
+            memories_raw_data[memory_key]["most_recent_access_timestamp"].isoformat()
+            if isinstance(
+                memories_raw_data[memory_key]["most_recent_access_timestamp"], datetime
+            )
+            else memories_raw_data[memory_key]["most_recent_access_timestamp"]
+        )
+
+        memories_raw_data[memory_key] = {
+            "description": memories_raw_data[memory_key]["description"],
+            "creation_timestamp": creation_timestamp,
+            "most_recent_access_timestamp": most_recent_access_timestamp,
+            "recency": memories_raw_data[memory_key]["recency"],
+            "importance": memories_raw_data[memory_key]["importance"],
+        }
+
+    return memories_raw_data

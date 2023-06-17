@@ -12,3 +12,11 @@ class UnableToSaveVectorDatabaseError(Exception):
 
 class DisparityBetweenDatabasesError(Exception):
     pass
+
+
+class CurrentTimestampIsLaterThanAccessTimestampError(Exception):
+    pass
+
+
+class ValueOutOfRangeError(Exception):
+    pass
