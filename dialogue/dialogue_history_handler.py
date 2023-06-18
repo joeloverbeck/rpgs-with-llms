@@ -3,7 +3,7 @@
 from errors import InvalidParameterError
 
 
-HOW_MANY_LINES_OF_DIALOGUE_TO_INCLUDE_IN_PROMPT = 10
+HOW_MANY_LINES_OF_DIALOGUE_TO_INCLUDE_IN_PROMPT = 20
 
 
 class DialogueHistoryHandler:

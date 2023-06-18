@@ -4,7 +4,7 @@ import os
 
 from defines.defines import DECAY_RATE
 from errors import FailedToReceiveFunctionCallFromAiModelError
-from llms.api_requests import request_response_from_ai_model_with_functions
+from llms.api_requests import request_ai_response_with_functions
 from math_utils import calculate_recency, normalize_value
 
 
@@ -85,7 +85,7 @@ def create_memory_dictionary(memory_description: str, current_timestamp: datetim
 
     messages.append({"role": "user", "content": user_prompt})
 
-    importance_response = request_response_from_ai_model_with_functions(
+    importance_response = request_ai_response_with_functions(
         messages, functions, function_call={"name": "get_importance_rating_for_memory"}
     )
 

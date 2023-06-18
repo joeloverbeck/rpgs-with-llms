@@ -1,6 +1,6 @@
 from defines.defines import GPT_4
 from errors import InvalidParameterError
-from llms.api_requests import request_response_from_ai_model
+from llms.api_requests import request_ai_response
 
 
 class DialogueSummarizer:
@@ -28,4 +28,4 @@ class DialogueSummarizer:
         user_content = "Please summarize the previous dialogue."
         copied_messages.append({"role": "user", "content": user_content})
 
-        return request_response_from_ai_model(copied_messages, model=GPT_4)
+        return request_ai_response(copied_messages, model=GPT_4)

@@ -12,8 +12,6 @@ def add_relevant_memories_regarding_interlocutors(
     agent_who_will_speak_now: Agent,
     involved_agents: list[Agent],
 ):
-    user_content += f"Summary of relevant context from {agent_who_will_speak_now.get_name()}'s memory:\n"
-
     index, memories_raw_data = MemoriesDatabaseLoader(
         agent_who_will_speak_now.get_name()
     ).load()
@@ -32,9 +30,11 @@ def add_relevant_memories_regarding_interlocutors(
                 NUMBER_OF_RESULTS_FOR_RELATIONSHIP_WITH_INTERLOCUTOR_QUERY,
             )
 
+            user_content += f"Summary of relevant context from {agent_who_will_speak_now.get_name()}'s memory regarding {agent.get_name()}:\n"
+
             user_content += " ".join(relevant_memories)
 
-    user_content += "\n"
+            user_content += "\n"
 
     return user_content
 

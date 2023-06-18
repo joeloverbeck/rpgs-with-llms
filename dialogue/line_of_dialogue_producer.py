@@ -1,5 +1,6 @@
 from datetime import datetime
 from agents.agent import Agent
+from datetime_utils import format_timestamp_for_prompt
 from defines.defines import GPT_4, SYSTEM_ROLE, USER_ROLE
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.next_speaker_selector import NextSpeakerSelector
@@ -66,6 +67,8 @@ class LineOfDialogueProducer:
                     message
                 )
 
+                print(f"{function_arguments.get(LINE_OF_DIALOGUE_PARAMETER_NAME)}\n")
+
                 return {
                     "role": USER_ROLE,
                     "content": function_arguments.get(LINE_OF_DIALOGUE_PARAMETER_NAME),
@@ -96,6 +99,8 @@ class LineOfDialogueProducer:
 
         if agent_who_will_speak_now.get_character_summary() is not None:
             user_content += f"{agent_who_will_speak_now.get_character_summary()}\n"
+
+        user_content += f"{format_timestamp_for_prompt(self._current_timestamp)}\n"
 
         user_content = add_involved_agents_status(user_content, self._involved_agents)
 

@@ -9,6 +9,7 @@ from dialogue.dialogue_continuation_handler import DialogueContinuationHandler
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.line_of_dialogue_producer import LineOfDialogueProducer
 from dialogue.next_speaker_selector import NextSpeakerSelector
+from input.confirmation import request_confirmation
 
 
 class DialogueCoordinator:
@@ -44,6 +45,7 @@ class DialogueCoordinator:
             self._reason_for_conversation,
             self._player_agent,
             self._involved_agents,
+            self._dialogue_history_handler,
             self._request_response_from_ai_model_with_functions_function,
         )
         self._line_of_dialogue_producer = LineOfDialogueProducer(
@@ -54,7 +56,10 @@ class DialogueCoordinator:
             self._next_speaker_selector,
         )
 
-        self._next_speaker_selector.select_first_speaker()
+        self._next_speaker_selector.select_first_speaker(
+            self._player_agent is not None
+            and request_confirmation("Do you want to speak first?")
+        )
 
     def perform_dialogue(self) -> list[dict]:
         """Performs a dialogue given the initial context passed during the initialization of this class.
@@ -65,6 +70,7 @@ class DialogueCoordinator:
             list[dict]: the list of messages containing every line of dialogue.
         """
         dialogue_continuation_handler = DialogueContinuationHandler(
+            self._current_timestamp,
             self._reason_for_conversation,
             self._involved_agents,
             self._dialogue_history_handler,

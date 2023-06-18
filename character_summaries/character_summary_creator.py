@@ -10,7 +10,7 @@ from defines.defines import (
     SYSTEM_ROLE,
     USER_ROLE,
 )
-from llms.api_requests import request_response_from_ai_model_with_functions
+from llms.api_requests import request_ai_response_with_functions
 from llms.messages import (
     get_message_from_gpt_response,
     load_arguments_of_message_with_function_call,
@@ -161,7 +161,7 @@ class CharacterSummaryCreator:
             }
         )
 
-        response = request_response_from_ai_model_with_functions(
+        response = request_ai_response_with_functions(
             messages,
             functions,
             function_call={

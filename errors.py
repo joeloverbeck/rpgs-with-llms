@@ -36,3 +36,15 @@ class CouldntDetermineNextSpeakerError(Exception):
 
 class AgentCharacterSummaryMissingError(Exception):
     pass
+
+
+class NextSpeakerUninitializedError(Exception):
+    pass
+
+
+class CouldntFindMatchingAgentError(Exception):
+    pass
+
+
+class PromptTooBigError(Exception):
+    pass
