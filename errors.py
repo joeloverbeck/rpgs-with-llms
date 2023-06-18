@@ -32,3 +32,7 @@ class AgentStatusMissingError(Exception):
 
 class CouldntDetermineNextSpeakerError(Exception):
     pass
+
+
+class AgentCharacterSummaryMissingError(Exception):
+    pass

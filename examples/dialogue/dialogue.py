@@ -2,11 +2,12 @@
 from datetime import datetime
 from agents.agent import Agent
 from console_output.messages import output_colored_message
-from dialogue.dialogue_handler import DialogueHandler
+from dialogue.dialogue_coordinator import DialogueCoordinator
 from files.existence import file_exists
 from files.loading import load_text_file
 from llms.api_requests import request_response_from_ai_model_with_functions
 from llms.user_requests import request_response_from_user
+from paths.full_paths import get_character_summary_full_path
 
 
 def main():
@@ -41,9 +42,12 @@ def main():
 
     involved_agents = []
 
-    leire = Agent("Leire", request_response_from_user)
+    leire = Agent("Leire", request_response_from_ai_model_with_functions)
     leire.set_status(
         "Leire was working overtime in the office, until Alberto the blob came down from another dimension to bother her."
+    )
+    leire.set_character_summary(
+        load_text_file(get_character_summary_full_path(leire.get_name()))
     )
 
     involved_agents.append(leire)
@@ -52,10 +56,13 @@ def main():
     alberto.set_status(
         "Alberto came down from a higher dimension to convince Leire to listen to his warning, so she can save humanity and the universe."
     )
+    alberto.set_character_summary(
+        load_text_file(get_character_summary_full_path(alberto.get_name()))
+    )
 
     involved_agents.append(alberto)
 
-    messages = DialogueHandler(
+    messages = DialogueCoordinator(
         involved_agents,
         leire,
         "Alberto is trying to convince Leire to save the universe, but Leire is reluctant because she doesn't even like people.",

@@ -16,7 +16,7 @@ with open("api_key.txt", "r", encoding="utf8") as file:
 
 @retry(wait=wait_random_exponential(min=1, max=40), stop=stop_after_attempt(3))
 def request_response_from_ai_model_with_functions(
-    messages: list[dict], functions, function_call="auto", model=GPT_3_5
+    messages: list[dict], functions: list[dict], function_call="auto", model=GPT_3_5
 ) -> dict:
     """Tries to get a response from an AI model. In this variant, the use of functions is expected
     by the AI model.
