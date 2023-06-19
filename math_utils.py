@@ -21,7 +21,7 @@ def calculate_recency(current_timestamp, access_timestamp, decay_rate) -> float:
     """
     if current_timestamp < access_timestamp:
         raise CurrentTimestampIsLaterThanAccessTimestampError(
-            "The current timestamp should be later than the access timestamp."
+            f"The current timestamp should be later than the access timestamp.\nCurrent timestamp: {current_timestamp}\nAccess timestamp: {access_timestamp}"
         )
 
     time_difference = current_timestamp - access_timestamp

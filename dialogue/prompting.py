@@ -1,7 +1,7 @@
 from datetime import datetime
 from agents.agent import Agent
-from memories.memories_database_loader import MemoriesDatabaseLoader
-from memories.memories_database_querier import MemoriesDatabaseQuerier
+from vector_databases.database_loader import DatabaseLoader
+from vector_databases.database_querier import DatabaseQuerier
 
 NUMBER_OF_RESULTS_FOR_RELATIONSHIP_WITH_INTERLOCUTOR_QUERY = 20
 
@@ -12,11 +12,11 @@ def add_relevant_memories_regarding_interlocutors(
     agent_who_will_speak_now: Agent,
     involved_agents: list[Agent],
 ):
-    index, memories_raw_data = MemoriesDatabaseLoader(
+    index, memories_raw_data = DatabaseLoader(
         agent_who_will_speak_now.get_name()
     ).load()
 
-    memories_database_querier = MemoriesDatabaseQuerier(
+    memories_database_querier = DatabaseQuerier(
         agent_who_will_speak_now.get_name(),
         current_timestamp,
         memories_raw_data,

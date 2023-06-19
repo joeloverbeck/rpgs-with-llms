@@ -2,8 +2,13 @@
 import argparse
 
 from datetime import datetime
-from memories.memories_database_loader import MemoriesDatabaseLoader
-from memories.memories_database_querier import MemoriesDatabaseQuerier
+from paths.full_paths import (
+    get_base_memories_full_path,
+    get_base_memories_json_full_path,
+)
+from vector_databases.database_loader import DatabaseLoader
+from vector_databases.database_querier import DatabaseQuerier
+from vector_databases.database_updater import DatabaseUpdater
 
 
 def main():
@@ -28,12 +33,26 @@ def main():
         print("Error: The query cannot be empty.")
         return None
 
-    index, raw_memories_data = MemoriesDatabaseLoader(args.agent_name).load()
+    database_full_path = get_base_memories_full_path(args.agent_name)
+    database_json_full_path = get_base_memories_json_full_path(args.agent_name)
+
+    index, raw_memories_data = DatabaseLoader(
+        args.agent_name, database_full_path, database_json_full_path
+    ).load()
 
     current_timestamp = datetime(2023, 6, 7)
 
-    query_results = MemoriesDatabaseQuerier(
-        args.agent_name, current_timestamp, raw_memories_data, index
+    database_updater = DatabaseUpdater(
+        current_timestamp, database_full_path, database_json_full_path
+    )
+
+    query_results = DatabaseQuerier(
+        current_timestamp,
+        raw_memories_data,
+        index,
+        database_full_path,
+        database_json_full_path,
+        database_updater,
     ).query(args.query, 5)
 
     print(f"{args.query}:\n")

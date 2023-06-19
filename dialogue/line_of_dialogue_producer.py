@@ -10,7 +10,7 @@ from dialogue.prompting import (
     add_relevant_memories_regarding_interlocutors,
 )
 from dialogue.speaking_order import determine_agent_who_will_speak_now
-from llms.functions import append_single_parameter_function
+from llms.functions import append_function
 from llms.messages import (
     get_message_from_gpt_response,
     load_arguments_of_message_with_function_call,
@@ -149,13 +149,17 @@ class LineOfDialogueProducer:
         )
 
         functions = []
-        append_single_parameter_function(
+        append_function(
             functions,
             WRITE_LINE_OF_DIALOGUE_FUNCTION_NAME,
             WRITE_LINE_OF_DIALOGUE_FUNCTION_DESCRIPTION,
-            LINE_OF_DIALOGUE_PARAMETER_NAME,
-            "string",
-            LINE_OF_DIALOGUE_PARAMETER_DESCRIPTION,
+            [
+                {
+                    "name": LINE_OF_DIALOGUE_PARAMETER_NAME,
+                    "type": "string",
+                    "description": LINE_OF_DIALOGUE_PARAMETER_DESCRIPTION,
+                }
+            ],
         )
 
         return self._separate_player_response_from_ai_model_response(

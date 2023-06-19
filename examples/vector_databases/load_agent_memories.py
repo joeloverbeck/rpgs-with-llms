@@ -1,8 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+from paths.full_paths import (
+    get_base_memories_full_path,
+    get_base_memories_json_full_path,
+)
 
-from memories.memories_database_loader import MemoriesDatabaseLoader
+from vector_databases.database_loader import DatabaseLoader
 
 
 def main():
@@ -20,7 +24,12 @@ def main():
         print("Error: The name of the agent cannot be empty.")
         return None
 
-    index, memories_raw_data = MemoriesDatabaseLoader(args.agent_name).load()
+    database_full_path = get_base_memories_full_path(args.agent_name)
+    database_json_full_path = get_base_memories_json_full_path(args.agent_name)
+
+    index, memories_raw_data = DatabaseLoader(
+        args.agent_name, database_full_path, database_json_full_path
+    ).load()
 
     print(memories_raw_data)
 

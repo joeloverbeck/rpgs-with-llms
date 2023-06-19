@@ -4,6 +4,7 @@ import os
 
 from defines.defines import DECAY_RATE, GPT_3_5
 from errors import FailedToReceiveFunctionCallFromAiModelError
+from llms.functions import append_function
 from llms.interface import AIModelInterface
 from math_utils import calculate_recency, normalize_value
 
@@ -65,21 +66,17 @@ def create_memory_dictionary(
     )
 
     functions = []
-    functions.append(
-        {
-            "name": "get_importance_rating_for_memory",
-            "description": "Gets the importance rating for a memory, from 1 to 10.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "rating": {
-                        "type": "integer",
-                        "description": "A rating from 1 to 10 of the importance of the memory.",
-                    }
-                },
-                "required": ["rating"],
-            },
-        }
+    append_function(
+        functions,
+        "get_importance_rating_for_memory",
+        "Gets the importance rating for a memory, from 1 to 10.",
+        [
+            {
+                "name": "rating",
+                "type": "integer",
+                "description": "A rating from 1 to 10 of the importance of the memory.",
+            }
+        ],
     )
 
     user_prompt = "On the scale of 1 to 10, where 1 is purely mundane (e.g., brushing teeth, making bed) "

@@ -2,8 +2,12 @@
 import argparse
 
 from datetime import datetime
-from memories.memories_database_loader import MemoriesDatabaseLoader
-from memories.memories_database_updater import MemoriesDatabaseUpdater
+from paths.full_paths import (
+    get_base_memories_full_path,
+    get_base_memories_json_full_path,
+)
+from vector_databases.database_loader import DatabaseLoader
+from vector_databases.database_updater import DatabaseUpdater
 
 
 def main():
@@ -28,13 +32,20 @@ def main():
         print("Error: The new memory cannot be empty.")
         return None
 
-    index, _ = MemoriesDatabaseLoader(args.agent_name).load()
+    database_full_path = get_base_memories_full_path(args.agent_name)
+    database_json_full_path = get_base_memories_json_full_path(args.agent_name)
+
+    index, _ = DatabaseLoader(
+        args.agent_name, database_full_path, database_json_full_path
+    ).load()
 
     current_timestamp = datetime(2023, 6, 6)
 
-    MemoriesDatabaseUpdater(
-        args.agent_name, current_timestamp, [args.new_memory], index
-    ).update()
+    DatabaseUpdater(
+        current_timestamp,
+        database_full_path,
+        database_json_full_path,
+    ).update_database_with_new_entries([args.new_memory], index)
 
     index.unload()
 

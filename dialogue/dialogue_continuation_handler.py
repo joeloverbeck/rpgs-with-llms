@@ -4,7 +4,7 @@ from dialogue.conversation_state import ConversationState
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.prompting import add_involved_agents_status, add_reason_for_conversation
 from input.confirmation import request_confirmation
-from llms.functions import append_single_parameter_function
+from llms.functions import append_function
 from llms.interface import AIModelInterface
 from llms.messages import (
     get_message_from_gpt_response,
@@ -102,13 +102,17 @@ class DialogueContinuationHandler:
         )
 
         functions = []
-        append_single_parameter_function(
+        append_function(
             functions,
             SHOULD_STOP_DIALOGUE_FUNCTION_NAME,
             SHOULD_STOP_DIALOGUE_FUNCTION_DESCRIPTION,
-            SHOULD_STOP_DIALOGUE_PARAMETER_NAME,
-            "boolean",
-            SHOULD_STOP_DIALOGUE_PARAMETER_DESCRIPTION,
+            [
+                {
+                    "name": SHOULD_STOP_DIALOGUE_PARAMETER_NAME,
+                    "type": "boolean",
+                    "description": SHOULD_STOP_DIALOGUE_PARAMETER_DESCRIPTION,
+                }
+            ],
         )
 
         message = get_message_from_gpt_response(

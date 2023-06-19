@@ -3,7 +3,8 @@ from datetime import datetime
 from annoy import AnnoyIndex
 
 from defines.defines import MODEL
-from memories.jsonification import create_memory_dictionary
+from llms.gpt_responder import GPTResponder
+from vector_databases.jsonification import create_memory_dictionary
 
 
 def create_vectorized_memory(
@@ -25,6 +26,8 @@ def create_vectorized_memory(
 
     index.add_item(vector_index, MODEL.encode(memory_description))
 
-    memory = create_memory_dictionary(memory_description, current_timestamp)
+    memory = create_memory_dictionary(
+        memory_description, current_timestamp, GPTResponder()
+    )
 
     return vector_index, memory

@@ -2,11 +2,11 @@ from datetime import datetime
 import json
 
 from annoy import AnnoyIndex
-from memories.creation import create_vector_database
-from memories.jsonification import append_to_previous_json_memories_if_necessary
-from memories.validation import ensure_parity_between_databases
+from vector_databases.creation import create_vector_database
+from vector_databases.jsonification import append_to_previous_json_memories_if_necessary
+from vector_databases.validation import ensure_parity_between_databases
 
-from memories.vectorization import create_vectorized_memory
+from vector_databases.vectorization import create_vectorized_memory
 
 
 def save_memories_to_json_file_ensuring_parity(

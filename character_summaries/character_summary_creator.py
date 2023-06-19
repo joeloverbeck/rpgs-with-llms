@@ -11,12 +11,13 @@ from defines.defines import (
     USER_ROLE,
 )
 from llms.api_requests import request_ai_response_with_functions
+from llms.functions import append_function
 from llms.messages import (
     get_message_from_gpt_response,
     load_arguments_of_message_with_function_call,
 )
-from memories.memories_database_loader import MemoriesDatabaseLoader
-from memories.memories_database_querier import MemoriesDatabaseQuerier
+from vector_databases.database_loader import DatabaseLoader
+from vector_databases.database_querier import DatabaseQuerier
 
 from paths.full_paths import (
     get_base_memories_full_path,
@@ -136,29 +137,19 @@ class CharacterSummaryCreator:
         )
 
         functions = []
-        functions.append(
-            {
-                "name": determine_character_attribute_parameters["function_name"],
-                "description": determine_character_attribute_parameters[
-                    "function_description"
-                ],
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        determine_character_attribute_parameters["parameter_name"]: {
-                            "type": determine_character_attribute_parameters[
-                                "parameter_type"
-                            ],
-                            "description": determine_character_attribute_parameters[
-                                "parameter_description"
-                            ],
-                        }
-                    },
-                    "required": [
-                        determine_character_attribute_parameters["parameter_name"]
+        append_function(
+            functions,
+            determine_character_attribute_parameters["function_name"],
+            determine_character_attribute_parameters["function_description"],
+            [
+                {
+                    "name": determine_character_attribute_parameters["parameter_name"],
+                    "type": determine_character_attribute_parameters["parameter_type"],
+                    "description": determine_character_attribute_parameters[
+                        "parameter_description"
                     ],
-                },
-            }
+                }
+            ],
         )
 
         response = request_ai_response_with_functions(
@@ -179,7 +170,7 @@ class CharacterSummaryCreator:
         )
 
     def _determine_character_traits(
-        self, memories_database_querier: MemoriesDatabaseQuerier
+        self, memories_database_querier: DatabaseQuerier
     ):
         """Relies on the AI model to determine the character's traits.
 
@@ -204,7 +195,7 @@ class CharacterSummaryCreator:
         )
 
     def _determine_recent_progress_in_life(
-        self, memories_database_querier: MemoriesDatabaseQuerier
+        self, memories_database_querier: DatabaseQuerier
     ):
         """Relies on the AI model to determine the character's recent progress in life.
 
@@ -229,7 +220,7 @@ class CharacterSummaryCreator:
         )
 
     def _determine_current_daily_occupation(
-        self, memories_database_querier: MemoriesDatabaseQuerier
+        self, memories_database_querier: DatabaseQuerier
     ):
         """Relies on the AI model to determine the character's daily occupation.
 
@@ -254,7 +245,7 @@ class CharacterSummaryCreator:
         )
 
     def _determine_character_age(
-        self, memories_database_querier: MemoriesDatabaseQuerier
+        self, memories_database_querier: DatabaseQuerier
     ):
         """Relies on the AI model to determine the character's age
 
@@ -280,7 +271,7 @@ class CharacterSummaryCreator:
         )
 
     def _determine_character_core_characteristics(
-        self, memories_database_querier: MemoriesDatabaseQuerier
+        self, memories_database_querier: DatabaseQuerier
     ):
         """Relies on the AI model to determine the character's core characteristics.
 
@@ -308,9 +299,9 @@ class CharacterSummaryCreator:
         """Creates and saves to file the character summary of the passed character."""
         # If a character summary already exists, this operation is going to overwrite it.
 
-        index, raw_memories = MemoriesDatabaseLoader(self._agent_name).load()
+        index, raw_memories = DatabaseLoader(self._agent_name).load()
 
-        memories_database_querier = MemoriesDatabaseQuerier(
+        memories_database_querier = DatabaseQuerier(
             self._agent_name, self._current_timestamp, raw_memories, index
         )
 

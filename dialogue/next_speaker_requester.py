@@ -7,7 +7,7 @@ from dialogue.conversation_state import ConversationState
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.speaking_order import request_from_ai_model_who_will_speak_next
 from dialogue.user_content import add_user_content_for_who_will_speak
-from llms.functions import append_single_parameter_function
+from llms.functions import append_function
 from llms.interface import AIModelInterface
 
 WHO_WILL_SPEAK_FIRST_GPT_SYSTEM_CONTENT = "I am WhoWillSpeakFirstGPT. I have the responsibility of determining the exact name of the agent who will "
@@ -78,13 +78,17 @@ class NextSpeakerRequester:
         messages.append({"role": USER_ROLE, "content": user_content})
 
         functions = []
-        append_single_parameter_function(
+        append_function(
             functions,
             function_name,
             function_description,
-            parameter_name,
-            "string",
-            parameter_description,
+            [
+                {
+                    "name": parameter_name,
+                    "type": "string",
+                    "description": parameter_description,
+                }
+            ],
         )
 
         return request_from_ai_model_who_will_speak_next(
