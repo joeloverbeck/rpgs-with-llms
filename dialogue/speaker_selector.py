@@ -1,31 +1,25 @@
-"""This module defines the class NextSpeakerSelector, that handles selecting the first speaker in a conversation,
+"""This module defines the class SpeakerSelector, that handles selecting the first speaker in a conversation,
 as well as the next speaker.
 """
-from datetime import datetime
-from typing import Callable
-from typing import List
 from agents.agent import Agent
+from dialogue.conversation_state import ConversationState
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.next_speaker_requester import NextSpeakerRequester
 from dialogue.speaker_other_than_previous_selector import (
     SpeakerOtherThanPreviousSelector,
 )
 from errors import CouldntFindMatchingAgentError
+from llms.interface import AIModelInterface
 
 
-class NextSpeakerSelector:
+class SpeakerSelector:
     """This class handles selecting who is going to speak first in a dialogue, as well as who is going to speak next."""
 
     def __init__(
         self,
-        current_timestamp: datetime,
-        reason_for_conversation: str,
-        player_agent: Agent | None,
-        involved_agents: List[Agent],
+        conversation_state: ConversationState,
         dialogue_history_handler: DialogueHistoryHandler,
-        request_ai_response_with_functions_function: Callable[
-            [List[dict], List[dict], str, str], dict
-        ],
+        ai_model_interface: AIModelInterface,
     ):
         """Creates an instance of the class NextSpeakerSelector
 
@@ -36,37 +30,23 @@ class NextSpeakerSelector:
             involved_agents (List[Agent]): the list of involved agents in the conversation
             request_ai_response_with_functions_function (Callable[ [List[dict], List[dict], str, str], dict ]): the function that generates
                 responses to requests, either by sending them to the user or to an AI model
-
-        Raises:
-            ValueError: if received 'involved_agents' with less than two agents
         """
-        if len(involved_agents) < 2:
-            raise ValueError(
-                f"Initialized {NextSpeakerSelector.__name__} with less than two involved agents: {involved_agents}"
-            )
 
         # Initialize the speaker to the first of the 'involved_agents' list, just in case.
-        self._next_speaker = involved_agents[0]
+        self._next_speaker = conversation_state.get_involved_agents()[0]
 
-        self._current_timestamp = current_timestamp
-        self._reason_for_conversation = reason_for_conversation
-        self._player_agent = player_agent
-        self._involved_agents = involved_agents
+        self._conversation_state = conversation_state
         self._dialogue_history_handler = dialogue_history_handler
-        self._request_ai_response_with_functions_function = (
-            request_ai_response_with_functions_function
-        )
+        self._ai_model_interface = ai_model_interface
 
         self._speaker_other_than_previous_selector = SpeakerOtherThanPreviousSelector(
-            self._involved_agents
+            self._conversation_state.get_involved_agents()
         )
 
         self._next_speaker_requester = NextSpeakerRequester(
-            self._current_timestamp,
-            self._reason_for_conversation,
-            self._involved_agents,
+            self._conversation_state,
             self._dialogue_history_handler,
-            self._request_ai_response_with_functions_function,
+            self._ai_model_interface,
         )
 
     def _set_next_speaker(self, next_speaker: Agent):
@@ -81,7 +61,7 @@ class NextSpeakerSelector:
         matching_agent = next(
             (
                 agent
-                for agent in self._involved_agents
+                for agent in self._conversation_state.get_involved_agents()
                 if agent.get_name().lower() == name.lower()
             ),
             None,
@@ -111,8 +91,11 @@ class NextSpeakerSelector:
         # We need to determine if the player will speak first, or if we will let
         # the AI model decide who speaks first.
         # The player can only have the option to speak first if 'player_agent' is not None.
-        if player_wants_to_speak_first and self._player_agent is not None:
-            self._set_next_speaker(self._player_agent)
+        if (
+            player_wants_to_speak_first
+            and self._conversation_state.get_player_agent() is not None
+        ):
+            self._set_next_speaker(self._conversation_state.get_player_agent())
         else:
             # When we kick off the dialogue, the AI model has to determine who is going to speak first.
             self._set_next_speaker(

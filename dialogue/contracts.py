@@ -1,3 +1,5 @@
+from typing import List
+from agents.agent import Agent
 from errors import (
     AgentCharacterSummaryMissingError,
     AgentStatusMissingError,
@@ -5,7 +7,9 @@ from errors import (
 )
 
 
-def ensure_dialogue_handler_initialization_contract(involved_agents, reason_for_conversation):
+def ensure_dialogue_handler_initialization_contract(
+    involved_agents: List[Agent], reason_for_conversation: str
+):
     if involved_agents is None:
         raise InvalidParameterError(
             "The DialogueHandler expected 'involved_agents' not to be None"

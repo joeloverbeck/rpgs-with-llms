@@ -1,14 +1,14 @@
 """This module contains the definition of NextSpeakerRequester, which relies on an AI model to determine
 the name of the character who will either speak first or speak next.
 """
-from datetime import datetime
-from typing import Callable, List
-from agents.agent import Agent
+from typing import Callable
 from defines.defines import SYSTEM_ROLE, USER_ROLE
+from dialogue.conversation_state import ConversationState
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.speaking_order import request_from_ai_model_who_will_speak_next
 from dialogue.user_content import add_user_content_for_who_will_speak
 from llms.functions import append_single_parameter_function
+from llms.interface import AIModelInterface
 
 WHO_WILL_SPEAK_FIRST_GPT_SYSTEM_CONTENT = "I am WhoWillSpeakFirstGPT. I have the responsibility of determining the exact name of the agent who will "
 WHO_WILL_SPEAK_FIRST_GPT_SYSTEM_CONTENT += (
@@ -36,21 +36,13 @@ CHARACTER_WHO_WILL_SPEAK_NEXT_PARAMETER_DESCRIPTION += (
 class NextSpeakerRequester:
     def __init__(
         self,
-        current_timestamp: datetime,
-        reason_for_conversation: str,
-        involved_agents: List[Agent],
+        conversation_state: ConversationState,
         dialogue_history_handler: DialogueHistoryHandler,
-        request_ai_response_with_functions_function: Callable[
-            [list[dict], list[dict], str, str], dict
-        ],
+        ai_model_interface: AIModelInterface,
     ):
-        self._current_timestamp = current_timestamp
-        self._reason_for_conversation = reason_for_conversation
-        self._involved_agents = involved_agents
+        self._conversation_state = conversation_state
         self._dialogue_history_handler = dialogue_history_handler
-        self._request_ai_response_with_functions_function = (
-            request_ai_response_with_functions_function
-        )
+        self._ai_model_interface = ai_model_interface
 
     def _determine_speaker(
         self,
@@ -78,9 +70,7 @@ class NextSpeakerRequester:
         messages = [{"role": SYSTEM_ROLE, "content": system_content}]
 
         user_content = add_user_content_for_who_will_speak(
-            self._current_timestamp,
-            self._reason_for_conversation,
-            self._involved_agents,
+            self._conversation_state,
             self._dialogue_history_handler,
         )
 
@@ -102,7 +92,7 @@ class NextSpeakerRequester:
             functions,
             function_name,
             parameter_name,
-            self._request_ai_response_with_functions_function,
+            self._ai_model_interface,
         )
 
     def request_first_speaker(self) -> str:

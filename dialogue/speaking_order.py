@@ -2,6 +2,7 @@ from typing import List
 from agents.agent import Agent
 from defines.defines import GPT_3_5
 from errors import CouldntDetermineNextSpeakerError, InvalidParameterError
+from llms.interface import AIModelInterface
 from llms.messages import (
     get_message_from_gpt_response,
     load_arguments_of_message_with_function_call,
@@ -34,14 +35,14 @@ def determine_agent_who_will_speak_now(
 
 
 def request_from_ai_model_who_will_speak_next(
-    messages,
-    functions,
-    function_name,
-    parameter_name,
-    request_response_from_ai_model_with_functions_function,
+    messages: dict,
+    functions: List[dict],
+    function_name: str,
+    parameter_name: str,
+    ai_model_interface: AIModelInterface,
 ):
     message = get_message_from_gpt_response(
-        request_response_from_ai_model_with_functions_function(
+        ai_model_interface.request_response_using_functions(
             messages,
             functions,
             {"name": function_name},

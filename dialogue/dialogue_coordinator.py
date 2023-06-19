@@ -1,65 +1,53 @@
-"""This module contains the definition of the Dialogue Handler class, which handles the dialogue between two or more characters.
+"""This module contains the definition of the Dialogue Coordinator class, which handles the dialogue between two or more characters.
 """
 
-from datetime import datetime
-from typing import Callable
-from agents.agent import Agent
 from dialogue.contracts import ensure_dialogue_handler_initialization_contract
+from dialogue.conversation_state import ConversationState
 from dialogue.dialogue_continuation_handler import DialogueContinuationHandler
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
 from dialogue.line_of_dialogue_producer import LineOfDialogueProducer
-from dialogue.next_speaker_selector import NextSpeakerSelector
-from input.confirmation import request_confirmation
+from dialogue.speaker_selector import SpeakerSelector
+from llms.interface import AIModelInterface
 
 
 class DialogueCoordinator:
-    """Handles the dialogue between two or more characters, relying on an AI model."""
+    """Coordinates the dialogue between two or more characters, relying on an AI model."""
 
     def __init__(
         self,
-        involved_agents: list[Agent],
-        player_agent: Agent | None,
-        reason_for_conversation: str,
-        current_timestamp: datetime,
-        request_response_from_ai_model_with_functions_function: Callable[
-            [list[dict], list[dict], str, str], dict
-        ],
+        conversation_state: ConversationState,
+        player_wants_to_speak_first: bool,
+        ai_model_interface: AIModelInterface,
     ):
+        """Initializates an instance of the DialogueCoordinator class.
+
+        Args:
+            conversation_state (ConversationState): the state of the conversation.
+            player_wants_to_speak_first (bool): whether the player wants to speak first.
+            request_response_from_ai_model_with_functions_function (Callable[ [list[dict], list[dict], str, str], dict ]): the function responsible
+                for requesting responses from either the user or an AI model.
+        """
         ensure_dialogue_handler_initialization_contract(
-            involved_agents, reason_for_conversation
+            conversation_state.get_involved_agents(),
+            conversation_state.get_reason_for_conversation(),
         )
 
-        self._current_timestamp = current_timestamp
+        self._ai_model_interface = ai_model_interface
 
-        self._request_response_from_ai_model_with_functions_function = (
-            request_response_from_ai_model_with_functions_function
-        )
-
-        self._reason_for_conversation = reason_for_conversation
-        self._involved_agents = involved_agents
-        self._player_agent = player_agent
+        self._conversation_state = conversation_state
 
         self._dialogue_history_handler = DialogueHistoryHandler()
-        self._next_speaker_selector = NextSpeakerSelector(
-            self._current_timestamp,
-            self._reason_for_conversation,
-            self._player_agent,
-            self._involved_agents,
+        self._speaker_selector = SpeakerSelector(
+            self._conversation_state,
             self._dialogue_history_handler,
-            self._request_response_from_ai_model_with_functions_function,
+            self._ai_model_interface,
         )
         self._line_of_dialogue_producer = LineOfDialogueProducer(
-            self._current_timestamp,
-            self._reason_for_conversation,
-            self._player_agent,
-            self._involved_agents,
-            self._next_speaker_selector,
+            self._conversation_state,
+            self._speaker_selector,
         )
 
-        self._next_speaker_selector.select_first_speaker(
-            self._player_agent is not None
-            and request_confirmation("Do you want to speak first?")
-        )
+        self._speaker_selector.select_first_speaker(player_wants_to_speak_first)
 
     def perform_dialogue(self) -> list[dict]:
         """Performs a dialogue given the initial context passed during the initialization of this class.
@@ -70,11 +58,9 @@ class DialogueCoordinator:
             list[dict]: the list of messages containing every line of dialogue.
         """
         dialogue_continuation_handler = DialogueContinuationHandler(
-            self._current_timestamp,
-            self._reason_for_conversation,
-            self._involved_agents,
+            self._conversation_state,
             self._dialogue_history_handler,
-            self._request_response_from_ai_model_with_functions_function,
+            self._ai_model_interface,
         )
 
         while dialogue_continuation_handler.should_dialogue_continue():
@@ -88,6 +74,6 @@ class DialogueCoordinator:
             dialogue_continuation_handler.determine_if_dialogue_should_end()
 
             if dialogue_continuation_handler.should_dialogue_continue():
-                self._next_speaker_selector.select_next_speaker()
+                self._speaker_selector.select_next_speaker()
 
         return self._dialogue_history_handler.get_dialogue_history()

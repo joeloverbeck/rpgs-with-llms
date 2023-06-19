@@ -1,9 +1,10 @@
+from llms.interface import AIModelInterface
+
+
 class Agent:
-    def __init__(self, name, request_response_from_ai_model_function):
+    def __init__(self, name: str, ai_model_interface: AIModelInterface):
         self._name = name
-        self._request_response_from_ai_model_function = (
-            request_response_from_ai_model_function
-        )
+        self._ai_model_interface = ai_model_interface
 
         self._status = None
         self._character_summary = None
@@ -11,8 +12,8 @@ class Agent:
     def get_name(self):
         return self._name
 
-    def get_request_response_from_ai_model_function(self):
-        return self._request_response_from_ai_model_function
+    def get_ai_model_interface(self):
+        return self._ai_model_interface
 
     def get_status(self):
         return self._status

@@ -2,9 +2,9 @@ from datetime import datetime
 import json
 import os
 
-from defines.defines import DECAY_RATE
+from defines.defines import DECAY_RATE, GPT_3_5
 from errors import FailedToReceiveFunctionCallFromAiModelError
-from llms.api_requests import request_ai_response_with_functions
+from llms.interface import AIModelInterface
 from math_utils import calculate_recency, normalize_value
 
 
@@ -34,7 +34,11 @@ def append_to_previous_json_memories_if_necessary(json_filename, memories):
     return memories
 
 
-def create_memory_dictionary(memory_description: str, current_timestamp: datetime):
+def create_memory_dictionary(
+    memory_description: str,
+    current_timestamp: datetime,
+    ai_model_interface: AIModelInterface,
+):
     """Creates a memory dict for the memory description passed
 
     Args:
@@ -85,8 +89,11 @@ def create_memory_dictionary(memory_description: str, current_timestamp: datetim
 
     messages.append({"role": "user", "content": user_prompt})
 
-    importance_response = request_ai_response_with_functions(
-        messages, functions, function_call={"name": "get_importance_rating_for_memory"}
+    importance_response = ai_model_interface.request_response_using_functions(
+        messages,
+        functions,
+        function_call={"name": "get_importance_rating_for_memory"},
+        model=GPT_3_5,
     )
 
     message = importance_response["choices"][0]["message"]

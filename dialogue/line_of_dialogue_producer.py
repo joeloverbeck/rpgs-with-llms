@@ -1,9 +1,9 @@
-from datetime import datetime
 from agents.agent import Agent
 from datetime_utils import format_timestamp_for_prompt
 from defines.defines import GPT_4, SYSTEM_ROLE, USER_ROLE
+from dialogue.conversation_state import ConversationState
 from dialogue.dialogue_history_handler import DialogueHistoryHandler
-from dialogue.next_speaker_selector import NextSpeakerSelector
+from dialogue.speaker_selector import SpeakerSelector
 from dialogue.prompting import (
     add_involved_agents_status,
     add_reason_for_conversation,
@@ -31,17 +31,11 @@ LINE_OF_DIALOGUE_PARAMETER_DESCRIPTION += "that can be arbitrarily long. Snippet
 class LineOfDialogueProducer:
     def __init__(
         self,
-        current_timestamp: datetime,
-        reason_for_conversation: str,
-        player_agent: Agent,
-        involved_agents: list[Agent],
-        next_speaker_selector: NextSpeakerSelector,
+        conversation_state: ConversationState,
+        speaker_selector: SpeakerSelector,
     ):
-        self._current_timestamp = current_timestamp
-        self._reason_for_conversation = reason_for_conversation
-        self._player_agent = player_agent
-        self._involved_agents = involved_agents
-        self._next_speaker_selector = next_speaker_selector
+        self._conversation_state = conversation_state
+        self._speaker_selector = speaker_selector
 
     def _separate_player_response_from_ai_model_response(
         self, agent_who_will_speak_now: Agent, response: dict
@@ -77,7 +71,7 @@ class LineOfDialogueProducer:
             # This message has been produced by the user.
             return message
 
-        error_message = f"Didn't know how to handle response {response}\nNext speaker: {self._next_speaker_selector.get_next_speaker()}"
+        error_message = f"Didn't know how to handle response {response}\nNext speaker: {self._speaker_selector.get_next_speaker()}"
         error_message += f"\nAgent who will speak now: {agent_who_will_speak_now}"
         raise ValueError(error_message)
 
@@ -100,19 +94,21 @@ class LineOfDialogueProducer:
         if agent_who_will_speak_now.get_character_summary() is not None:
             user_content += f"{agent_who_will_speak_now.get_character_summary()}\n"
 
-        user_content += f"{format_timestamp_for_prompt(self._current_timestamp)}\n"
+        user_content += f"{format_timestamp_for_prompt(self._conversation_state.get_current_timestamp())}\n"
 
-        user_content = add_involved_agents_status(user_content, self._involved_agents)
+        user_content = add_involved_agents_status(
+            user_content, self._conversation_state.get_involved_agents()
+        )
 
         user_content = add_reason_for_conversation(
-            user_content, self._reason_for_conversation
+            user_content, self._conversation_state.get_reason_for_conversation()
         )
 
         user_content = add_relevant_memories_regarding_interlocutors(
-            self._current_timestamp,
+            self._conversation_state.get_current_timestamp(),
             user_content,
             agent_who_will_speak_now,
-            self._involved_agents,
+            self._conversation_state.get_involved_agents(),
         )
 
         # Now add the dialogue history
@@ -139,7 +135,8 @@ class LineOfDialogueProducer:
         )
 
         agent_who_will_speak_now = determine_agent_who_will_speak_now(
-            self._next_speaker_selector.get_next_speaker(), self._involved_agents
+            self._speaker_selector.get_next_speaker(),
+            self._conversation_state.get_involved_agents(),
         )
 
         messages.append(
@@ -163,7 +160,7 @@ class LineOfDialogueProducer:
 
         return self._separate_player_response_from_ai_model_response(
             agent_who_will_speak_now,
-            agent_who_will_speak_now.get_request_response_from_ai_model_function()(
+            agent_who_will_speak_now.get_ai_model_interface().request_response_using_functions(
                 messages,
                 functions,
                 {"name": WRITE_LINE_OF_DIALOGUE_FUNCTION_NAME},
